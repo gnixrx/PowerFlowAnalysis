@@ -20,6 +20,13 @@ The LineData class describes the connections between nodes as physical lines in 
 """
 class LineData:
     def set_state(self, new_state: str):
+        """
+        Sets up the state of the line.
+        :param new_state: New state of "Off" or "Half" otherwise will default to the on state.
+        :type new_state: string
+        :return: None
+        :rtype: None
+        """
         if new_state == "Off":
             self._state = "Off"
         elif new_state == "Half":
@@ -54,14 +61,16 @@ class LineData:
         :return: The sparse array for the conductance in this connection between nodes in the network.
         :rtype: class: csr_array
         """
-        # Set multipler for state
+        # Set multipler for state.
         if self._state == "Off": m = 0
-        elif self._state == "Half": m = 0.5 # Y_total = Y_1 + Y_2 therefore Y_2 = Y_total - Y_1
+        elif self._state == "Half": m = 0.5 # Y_total = Y_1 + Y_2, if Y_1 = Y_2 = Y, then Y = Y_total * 0.5
         else: m = 1
 
+        # Create the stamp values for diagonal and nondiagonals for this line.
         y_diag_stamp = m * 1 / (self._r + 1j * self._x) + 1j * self._half_b
         y_nondiag_stamp = m * -1 / (self._r + 1j * self._x)
 
+        # Create and return the sparse array.
         row = [self._f, self._t, self._f, self._t]
         col = [self._f, self._t, self._t, self._f]
         data = [y_diag_stamp, y_diag_stamp, y_nondiag_stamp, y_nondiag_stamp]
@@ -69,13 +78,13 @@ class LineData:
 
     # Initialize the class
     def __init__(self, going_from: int, going_to: int, resistance: float, reactance: float, total_shunt_susceptance: float, maximum_capacity: int):
-        self._f = going_from - 1 # connection going from index
-        self._t = going_to - 1 # connection going to index
-        self._r = resistance # resistance of connection in pu
-        self._x = reactance # reactance of connection in pu
-        self._half_b = total_shunt_susceptance / 2 # half the total shunt susceptance in pu
-        self._fmax = maximum_capacity / s_base # maximum transmission capacity in pu
-        self._state = "On"
+        self._f = going_from - 1 # Connection going from index
+        self._t = going_to - 1 # Connection going to index
+        self._r = resistance # Resistance of connection in pu
+        self._x = reactance # Reactance of connection in pu
+        self._half_b = total_shunt_susceptance / 2 # Half the total shunt susceptance in pu
+        self._fmax = maximum_capacity / s_base # Maximum transmission capacity in pu
+        self._state = "On" # Sets state to on for this line
 
     def __repr__(self):
         return f"{self.__class__.__name__}> Connection: {self._f + 1} <-> {self._t + 1}, Type: {self.type()}, State: {self._state}"

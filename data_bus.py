@@ -1,3 +1,4 @@
+import numpy as np
 from global_setting import s_base
 
 """
@@ -16,7 +17,7 @@ The BusData class describes the attributes of the busses in the power system.
 :type v_set: float
 
 TODO:
-
+Create the bus variables and mismatch implicit equations
 """
 
 class BusData:
@@ -33,11 +34,24 @@ class BusData:
         self._q_load = q / s_base # Load Reactive Power in pu
         self._p_gen = p_gen / s_base # Generated Active Power in pu
 
-        if self._type == 'S' or self._type == 'PV':
-            self._v_set = v_set # Reference voltage at the bus in pu
-        else:
-            self._v_set = None
+        self._v_set = v_set # Reference voltage at the bus in pu
+
+        self._P = None
+        if self._type == 'G' or self._type == 'D':
+            self._P = self._p_gen - self._p_load
+
+        self._P == None
+        if self._type == 'D':
+            self._Q = -self._q_load
+
+        self._V = 1 # Initial Guess V in pu
+        if self._type == 'S' or self._type == 'G':
+            self._V = self._v_set
+
+        self._Th = 0 # Initial guess or set for Slack Bus in radians
 
 
     def __repr__(self):
-        return f"{self.__class__.__name__}> Bus Num: {self._b + 1}, Type: {self._type_verbose}, "
+        return (f"{self.__class__.__name__}> Bus Num: {self._b + 1}, Type: {self._type_verbose}, "
+                f"Active Power: {np.round(self._P, 3)} p.u.,  Reactive Power: {np.round(self._Q, 3)} p.u., "
+                f"Voltage: {np.round(self._V, 3)} p.u., Angle: {np.round(np.degrees(self._Th), 3)}\xb0")

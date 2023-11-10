@@ -1,16 +1,12 @@
 import numpy as np
 from scipy.sparse import csr_array
 from data_line import LineData
-from data_bus import BusData
 
 """
 NodalAnalysis class describes the circuit network of lines and connections of busses of the power system.
 :param line_data: A list of LineData which represent the connections between nodes in the graph of the network in the power system. Such as
                   lines or transformers connecting the different busses in the power system.
-:type line_data: list of class: LineData
-:param bus_data: A list of BusData which represent the attributes of the nodes in the graph of the network in the power system, including
-                 power consumed and generated at the node.
-:type bus_data: list of class: BusData
+:type line_data: np.Array of ListData
 
 """
 class NodalAnalysis:
@@ -36,17 +32,23 @@ class NodalAnalysis:
         for line in self._line_data:
             self._Y = self._Y + line.y_stamp(self._node_max)
 
-        return self._Y.toarray()
+        return self._Y
+
+    def get_node_max(self):
+        """
+        Returns the maximum node numbers in the network from the line data
+        :return: Maximum node
+        :rtype: int
+        """
+        return self._node_max
 
     # Initialize the class
-    def __init__(self, line_data: LineData, bus_data: BusData):
+    def __init__(self, line_data: np.array):
         self._line_data = line_data
 
         # Create node count
-        ld_max = max(line.max_node() for line in line_data)
-        bd_max = bus_data.size
-        self._node_max = max(ld_max, bd_max) # Maximum number of nodes in the system
+        self._node_max = max([line.max_node() for line in line_data]) + 1 # Maximum node refered in each line
 
 
     def __repr__(self):
-        return f"{self.__class__.__name__}> Number of nodes: {self.nodes_max}"
+        return f"{self.__class__.__name__}> Number of nodes: {self._node_max}"
