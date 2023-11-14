@@ -1,22 +1,27 @@
 import numpy as np
 from data_reader import DataReader
+from data_writer import DataWriter
 from nodal_analysis import NodalAnalysis
 from power_analysis import PowerAnalysis
 
 def main():
-    np.set_printoptions(suppress=True)
-
     # Set up base case
-    data = DataReader("simple_basecase.xlsx")
-    nodal = NodalAnalysis(data.line_data)
-    power = PowerAnalysis(data.bus_data, nodal.get_y_matrix())
+    data_read = DataReader("system_basecase.xlsx")
+    nodal = NodalAnalysis(data_read.line_data)
+    power = PowerAnalysis(data_read.bus_data, nodal.get_y_matrix())
     if (nodal.get_node_max() != power.get_node_max()):
         print("Error: Maximum nodes in line data does not match bus data.")
         exit()
 
-    power.update()
+    data_write = DataWriter()
+    data_write.write_y_matrix(nodal.get_y_matrix())
 
-    print(data.bus_data)
+    # Run base case.
+    print("Running base case.")
+    print(power.update())
+
+    print(data_read.bus_data)
+    print()
 
     # Set up contingency case 1
     # One circuit of line 1 <-> 2 are taken out of service.

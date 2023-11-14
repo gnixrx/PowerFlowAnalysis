@@ -21,10 +21,67 @@ Create the bus variables and mismatch implicit equations
 """
 
 class BusData:
+    @property
+    def P(self):
+        """
+        Returns the active power at this bus in pu.
+        :return: Active power
+        :rtype: float
+        """
+        return self._P
+
+    @property
+    def Q(self):
+        """
+        Returns the reactive power at this bus in pu.
+        :return: Reactive power
+        :rtype: float
+        """
+        return self._Q
+
+    @property
+    def V(self):
+        """
+        Returns the voltage at this bus in pu.
+        :return: Voltage
+        :rtype: float
+        """
+        return self._V
+
+    @property
+    def Th(self):
+        """
+        Returns the voltage angle at this bus in radians.
+        :return: Voltage angle, theta
+        :rtype: float
+        """
+        return self._Th
+
+    @P.setter
+    def P(self, p):
+        if self._type == 'S': # only settable in S bus
+            self._P = p
+
+    @Q.setter
+    def Q(self, q):
+        if self._type != 'D': # only settable in a S or PV bus
+            self._Q = q
+
+    @V.setter
+    def V(self, v):
+        if self._type == 'D': # only settable in a PQ bus
+            self._V = v
+
+    @Th.setter
+    def Th(self, th):
+        if self._type != 'S': # only settable in a PQ or PV bus
+            self._Th = th
+
 
     def __init__(self, b: int, p: float, q: float, type: chr, p_gen: int, v_set: float):
         self._b = b - 1 # Bus Number index
         self._type = type # Bus type
+
         # Create verbose version of type
         if self._type == 'S': self._type_verbose = "Slack bus"
         elif self._type == 'G': self._type_verbose = "PV bus"
@@ -40,18 +97,23 @@ class BusData:
         if self._type == 'G' or self._type == 'D':
             self._P = self._p_gen - self._p_load
 
-        self._P == None
+        self._Q = None
         if self._type == 'D':
             self._Q = -self._q_load
 
-        self._V = 1 # Initial Guess V in pu
+        self._V = 1.0 # Initial Guess V in pu
         if self._type == 'S' or self._type == 'G':
             self._V = self._v_set
 
-        self._Th = 0 # Initial guess or set for Slack Bus in radians
+        self._Th = 0.0 # Initial guess or set for Slack Bus in radians
 
 
     def __repr__(self):
+        if self._P == None: p = "Unknown"
+        else: p = f"{np.round(self._P, 3)} p.u., {np.round(self._P * s_base, 3)} MW"
+
+        if self._Q == None: q = "Unknown"
+        else: q = f"{np.round(self._Q, 3)} p.u., {np.round(self._Q * s_base, 3)} MVar"
+
         return (f"{self.__class__.__name__}> Bus Num: {self._b + 1}, Type: {self._type_verbose}, "
-                f"Active Power: {np.round(self._P, 3)} p.u.,  Reactive Power: {np.round(self._Q, 3)} p.u., "
-                f"Voltage: {np.round(self._V, 3)} p.u., Angle: {np.round(np.degrees(self._Th), 3)}\xb0")
+                f"P: {p},  Q: {q}, V: {np.round(self._V, 3)} p.u., Theta: {np.round(np.degrees(self._Th), 3)}\xb0")
