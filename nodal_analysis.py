@@ -10,15 +10,6 @@ NodalAnalysis class describes the circuit network of lines and connections of bu
 
 """
 class NodalAnalysis:
-    def get_gb_matrix(self):
-        """
-        Returns the separated conductance and susceptance matrices of the current network.
-        :return: The separataed _Y matrix as the conductance matrix _G, and the susceptane matrix _B separately.
-        :rtype: array, array
-        """
-        Y = self.get_y_matrix()
-        return np.real(Y), np.imag(Y)
-
     # Return the combined Y admittance matrix as array
     def get_y_matrix(self):
         """
