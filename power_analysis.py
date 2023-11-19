@@ -12,9 +12,20 @@ First the class solves the mismatch equations for PQ and PV busses:
 :type bus_data: np.Array of BusData
 :param y_matrix: Sparse admittance matrix
 :type y_matrix: csr_array
+:param line_data: A list of LineData which represent the connections between nodes in the graph of the network in the power system.
+:type line_data: np.Array of ListData
 """
 
 class PowerAnalysis:
+    @property
+    def update_data(self):
+        """
+        Returns the update data from the most recent update.
+        :return: Tuple of iterations, execution time, and maximum P and Q mismatches per iteration
+        :rtype: (int, float, list)
+        """
+        return self._iterations, self._exec_time, self._mm_records
+
     def update(self):
         """
         Run the power system analysis.
@@ -25,8 +36,9 @@ class PowerAnalysis:
         self.solve_implicit()
         self.solve_explicit()
         end = time.perf_counter()
+        self._exec_time = end - start
 
-        return f"Update took {end - start:0.5f}s in {self._iterations} iterations."
+        return f"Update took {self._exec_time:0.5f}s in {self._iterations} iterations."
 
     def solve_implicit(self):
         """
@@ -35,10 +47,18 @@ class PowerAnalysis:
         :rtype: None
         """
         # Start implicit equations
+        for bus in self._pq_pv: # Set initial conditions
+            if bus.V == None:
+                bus.V = 1.0
+            if bus.Th == None:
+                bus.Th = 0
+
         convergence = 1
         self._iterations = 0
+        self._mm_records = []
         while convergence >= 0.001:  # When the minimum is over the floor accuracy
-            mm_vector = self.calc_mismatch()
+            mm_vector, mm_record = self.calc_mismatch()
+            self._mm_records.append(mm_record)
 
             # Build inverse Jacobian matrix
             J = np.bmat([[self.H(), self.M()], [self.N(), self.L()]])
@@ -255,6 +275,8 @@ class PowerAnalysis:
         :return: The values for mismatch equations in a vector
         :rtype: np.array(float)
         """
+        mm_record = [self._bus_data[0], 0, self._bus_data[0], 0] # Use slack bus as default with 0 mismatch
+
         # for each P and Q equation or PQ and PV bus calculate the resulting P and Q mismatch numbers
         PQ = np.empty(self._pq_pv.size + self._pq.size)
 
@@ -262,12 +284,21 @@ class PowerAnalysis:
         P_i = 0
         for bus in self._pq_pv:
             # Calculate Active Power for PQ/PV bus
-            PQ[P_i] = np.sum(self.power_flow_eq(True, bus)) - bus._P
+            p_mm = np.sum(self.power_flow_eq(True, bus)) - bus._P
+            if p_mm > mm_record[1]:
+                mm_record[0] = bus
+                mm_record[1] = p_mm
+            PQ[P_i] = p_mm
             if bus._type == 'D':
-                PQ[P_i + self._pq_pv.size] = np.sum(self.power_flow_eq(False, bus)) - bus._Q
+                q_mm = np.sum(self.power_flow_eq(False, bus)) - bus._Q
+                if q_mm > mm_record[3]:
+                    mm_record[2] = bus
+                    mm_record[3] = q_mm
+                PQ[P_i + self._pq_pv.size] = q_mm
+
             P_i += 1 # Next PQ/PV bus
 
-        return PQ
+        return PQ, mm_record
 
 
     def get_node_max(self):
@@ -292,6 +323,11 @@ class PowerAnalysis:
         self._s_pv = np.array([bus for bus in bus_data if bus._type == 'S' or bus._type == 'G'])
         self._pq = np.array([bus for bus in bus_data if bus._type == 'D'])
         self._pq_pv = np.concatenate((self._pq, np.array([bus for bus in bus_data if bus._type == 'G'])))
+
+        # Set up initial variables
+        self._iterations = 0
+        self._exec_time = None
+        self._mm_records = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}> Number of Nodes: {self._node_max}"
