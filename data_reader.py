@@ -47,12 +47,23 @@ class DataReader:
             print("Bus data no present. Reconcider system definition file.")
 
         # Populate the data as objects
-        # List of LineData
-        self._line_data = np.array([ LineData(row['From'], row['To'], row['Rtotal, p.u.'], row['Xtotal, p.u.'], row['Btotal, p.u.'], row['Fmax, MVA'])
-                                     for row in line_data_raw.to_dict(orient='records') ])
         # List of BusData
-        self._bus_data = np.array([ BusData(row['Bus #'], row['P MW'], row['Q MVAr'], row['Type'], row['P Gen'], row['V Set'])
+        self._bus_data = np.array([ BusData(row['Bus #'],
+                                            row['P MW'],
+                                            row['Q MVAr'],
+                                            row['Type'],
+                                            row['P Gen'],
+                                            row['V Set'])
                                     for row in bus_data_raw.to_dict(orient='records') ])
+        # List of LineData
+        self._line_data = np.array([ LineData(self._bus_data[row['From'] - 1],
+                                              self._bus_data[row['To'] - 1],
+                                              row['Rtotal, p.u.'],
+                                              row['Xtotal, p.u.'],
+                                              row['Btotal, p.u.'],
+                                              row['Fmax, MVA'])
+                                     for row in line_data_raw.to_dict(orient='records') ])
+
 
     def __repr__(self):
         return f'{self.__class__.__name__}> File: {self.file}'
