@@ -6,7 +6,7 @@ from data_line import LineData
 NodalAnalysis class describes the circuit network of lines and connections of busses of the power system.
 :param line_data: A list of LineData which represent the connections between nodes in the graph of the network in the power system. Such as
                   lines or transformers connecting the different busses in the power system.
-:type line_data: np.Array of ListData
+:type line_data: np.Array of LineData
 
 """
 class NodalAnalysis:
@@ -17,7 +17,6 @@ class NodalAnalysis:
         :return: The combined _Y matrix
         :rtype: array
         """
-
         # Create admittance matrix
         self._Y = csr_array((self._node_max, self._node_max), dtype=float) # Y Admittance Matrix
         for line in self._line_data:
