@@ -1,13 +1,19 @@
 import time
 import numpy as np
 from scipy.sparse import csr_array
+from global_setting import mm_max
 from data_bus import BusData
 """
 The power analysis class interperates the inputs from the node/bus and line data and uses the power analysis equations
 to find the power injected at the node/bus.
-First the class solves the mismatch equations for PQ and PV busses:
-    Pk = sum from i=1 to N ( Vk Vi (Gki cos Thki + Bki sin Thki)
-    Qk = sum from i=1 to N ( Vk Vi (Gki cos Thki - Bki sin Thki)
+Solve the implicit equations by:
+    Solving the mismatch equations for PQ and PV busses:
+        Pk = sum from i=1 to N ( Vk Vi (Gki cos Thki + Bki sin Thki)
+        Qk = sum from i=1 to N ( Vk Vi (Gki cos Thki - Bki sin Thki)
+    Builds the Jacobian to find the where the system balances to minimize the delta between the voltages/angles using the 
+        Newton-Raphson method.
+    Recalculate the new voltages/angles for PQ/PV busses, then return to solving mismatch if the delta was not low enough.
+Solve the explicit equations to find the active and reactive power on the PV/S busses.
 :param bus_data: A list of BusData which represent the  nodes in the graph of the network in the power system.
 :type bus_data: np.Array of BusData
 :param y_matrix: Sparse admittance matrix
@@ -26,12 +32,17 @@ class PowerAnalysis:
         """
         return self._iterations, self._exec_time, self._mm_records
 
-    def update(self):
+    def update(self, y_matrix):
         """
         Run the power system analysis.
         :return: Time and number of iterations it took to complete the analysis.
         :rtype: string
         """
+        # Import nodal analysis
+        self._Y_row, self._Y_col = y_matrix.nonzero()
+        self._G_mat, self._B_mat = np.real(y_matrix), np.imag(y_matrix)
+
+        # Start power analysis
         start = time.perf_counter()
         self.solve_implicit()
         self.solve_explicit()
@@ -56,7 +67,7 @@ class PowerAnalysis:
         convergence = 1
         self._iterations = 0
         self._mm_records = []
-        while convergence >= 0.001:  # When the minimum is over the floor accuracy
+        while convergence >= mm_max:  # When the absolute maximum is over the floor accuracy try again.
             mm_vector, mm_record = self.calc_mismatch()
             self._mm_records.append(mm_record)
 
@@ -309,13 +320,9 @@ class PowerAnalysis:
         """
         return self._node_max
 
-    def __init__(self, bus_data: np.array, y_matrix: csr_array):
+    def __init__(self, bus_data: np.array):
         # Create node count
         self._node_max = max([bus._b for bus in bus_data]) + 1
-
-        # Set up Y matrix
-        self._Y_row, self._Y_col = y_matrix.nonzero()
-        self._G_mat, self._B_mat = np.real(y_matrix), np.imag(y_matrix)
 
         # Set up bus_data
         self._bus_data = bus_data

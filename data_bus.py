@@ -1,5 +1,5 @@
 import numpy as np
-from global_setting import s_base
+from global_setting import s_base, v_max, v_min
 
 """
 The BusData class describes the attributes of the busses in the power system.
@@ -101,6 +101,17 @@ class BusData:
         return self._Th
 
     @property
+    def in_V_limit(self):
+        """
+        Returns if this bus is within pre-defined voltage parameters.
+        :return: The status of the bus within voltage parameters.
+        :rtype: boolean
+        """
+        if self.V > v_max or self.V < v_min:
+            return False
+        return True
+
+    @property
     def type(self):
         """
         Returns the type of this bus, Slack, PV, or PQ.
@@ -112,21 +123,49 @@ class BusData:
     ### ----------------------------------------- Setters -----------------------------------------
     @P.setter
     def P(self, p):
+        """
+        Setter for active power, only settable in the slack bus.
+        :param p: Real power
+        :type p: float
+        :return: None
+        :rtype: none
+        """
         if self._type == 'S': # only settable in S bus
             self._P = p
 
     @Q.setter
     def Q(self, q):
+        """
+        Setter for reactive power, settable in the S or PV busses.
+        :param q: Reactive power
+        :type q: float
+        :return: None
+        :rtype: none
+        """
         if self._type != 'D': # only settable in a S or PV bus
             self._Q = q
 
     @V.setter
     def V(self, v):
+        """
+        Setter for bus voltage, settable only in the PQ bus.
+        :param v: Voltage
+        :type v: float
+        :return: None
+        :rtype: none
+        """
         if self._type == 'D': # only settable in a PQ bus
             self._V = v
 
     @Th.setter
     def Th(self, th):
+        """
+        Setter for bus voltage angle, settable in PQ or PV busses.
+        :param th: Voltage angle in radians
+        :type th: float
+        :return: None
+        :rtype: none
+        """
         if self._type != 'S': # only settable in a PQ or PV bus
             self._Th = th
 
@@ -145,6 +184,7 @@ class BusData:
         self._p_gen = p_gen / s_base # Generated Active Power in pu
         self._v_set = v_set # Voltage at the bus in pu
 
+        # Set up internal properties.
         self._P = None
         if self._type == 'G' or self._type == 'D':
             self._P = self._p_gen - self._p_load

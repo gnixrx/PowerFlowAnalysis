@@ -65,9 +65,20 @@ class LineData:
         :return: Overload status "Unknown", True, or False
         :rtype: string or boolean
         """
+        # Don't bother if power is unknown.
         if self.p_from == "Unknown" or self.q_from == "Unknown" or self.p_to == "Unknown" or self.q_to == "Unknown":
             return "Unknown"
-        if np.sqrt(self.p_from ** 2 + self.q_from ** 2) <= self._fmax or sqrt(self.p_to ** 2 + self.q_to ** 2):
+
+        # Find power
+        from_mva = np.sqrt(self.p_from ** 2 + self.q_from ** 2)
+        to_mva = np.sqrt(self.p_to ** 2 + self.q_to ** 2)
+
+        # Set multipler for state.
+        if self._state == "Off": m = 0
+        elif self._state == "Half":  m = 0.5  # Y_total = Y_1 + Y_2, if Y_1 = Y_2 = Y, then Y = Y_total * 0.5
+        else: m = 1
+
+        if from_mva <= m * self._fmax or to_mva <= m * self._fmax:
             return False
         return True
 
@@ -107,7 +118,7 @@ class LineData:
         elif new_state == "Half":
             self._state = "Half"
         else:
-            status = "On"
+            self._state = "On"
 
     ### ----------------------------------------- Functions -----------------------------------------
     def line_flow_calc(self, k, i):
@@ -124,10 +135,15 @@ class LineData:
         if k.V == None or i.V == None:
             return "Unknown"
 
+        # Set multipler for state.
+        if self._state == "Off": m = 0
+        elif self._state == "Half": m = 0.5  # Y_total = Y_1 + Y_2, if Y_1 = Y_2 = Y, then Y = Y_total * 0.5
+        else: m = 1
+
         Vk = k.V * np.cos(k.Th) + 1j * k.V * np.sin(k.Th)
         Vi = i.V * np.cos(i.Th) + 1j * i.V * np.sin(i.Th)
 
-        I_ki = (Vk - Vi) / (self._r + 1j * self._x) + 1j * self._half_b * Vk
+        I_ki = m * ((Vk - Vi) / (self._r + 1j * self._x) + 1j * self._half_b * Vk)
         result = Vk * np.conjugate(I_ki)
         return result
 
@@ -156,7 +172,7 @@ class LineData:
         else: m = 1
 
         # Create the stamp values for diagonal and nondiagonals for this line.
-        y_diag_stamp = m * 1 / (self._r + 1j * self._x) + 1j * self._half_b
+        y_diag_stamp = m * (1 / (self._r + 1j * self._x) + 1j * self._half_b)
         y_nondiag_stamp = m * -1 / (self._r + 1j * self._x)
 
         # Create and return the sparse array.
@@ -178,5 +194,4 @@ class LineData:
 
 
     def __repr__(self):
-        return (f"{self.__class__.__name__}> Connection: {self._f.id + 1} <-> {self._t.id + 1}, Type: {self.type}, "
-                f"State: {self.state}, Overloaded: {self.overloaded}")
+        return (f"{self.__class__.__name__}> Connection: {self._f.id + 1} <-> {self._t.id + 1}, Type: {self.type}, State: {self.state}")

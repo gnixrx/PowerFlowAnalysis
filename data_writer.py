@@ -11,6 +11,16 @@ Data writer class creates the excel outputs for the analysis.
 :type file: string
 """
 class DataWriter():
+    ### ------------------------------------------ Getters ------------------------------------------
+    @property
+    def file(self):
+        """
+        Returns the file name.
+        :return: File name.
+        :rtype: string
+        """
+        return self._file
+
     ### ----------------------------------------- Functions -----------------------------------------
     def add_y_matrix(self, y_mat):
         """
@@ -55,13 +65,14 @@ class DataWriter():
         :rtype: none
         """
         # Create bus results
-        col = ['Bus', 'Type', 'V (p.u.)', 'Angle (degrees)', 'Real Power Gen (MW)',
-               'Reactive Power Gen (MVAr)', 'Real Power Load (MW)', 'Reactive Power Load (MVAr)' ]
+        col = ['Bus', 'Type', 'V (p.u.)', 'Angle (degrees)', 'Real Power Gen (MW)', 'Reactive Power Gen (MVAr)',
+               'Real Power Load (MW)', 'Reactive Power Load (MVAr)', 'Within Voltage Limits' ]
         b_result = []
         for bus in bus_data:
             b_result.append([bus.id + 1, bus.type, bus.V, np.degrees(bus.Th),
                              bus.P_gen * s_base, bus.Q_gen * s_base,
-                             bus.P_load * s_base, bus.Q_load * s_base])
+                             bus.P_load * s_base, bus.Q_load * s_base,
+                             str(bus.in_V_limit)])
 
         self._bus_result_df.append(pd.DataFrame(b_result, columns=col))
 
@@ -118,6 +129,7 @@ class DataWriter():
 
     # Initialize the data writer class.
     def __init__(self, file="system_output.xlsx"):
+        self._file = file
         self._xls = pd.ExcelWriter(file, engine='openpyxl')
         self._y_mat_df = []
         self._mm_record_df = []
