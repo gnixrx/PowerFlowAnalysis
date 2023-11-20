@@ -4,16 +4,16 @@ from data_bus import BusData
 from scipy.sparse import csr_array
 
 """
-The LineData class describes the connections between nodes as physical lines in the pi model, or as a simple 
-    representation of a transformer.
+The LineData class describes the connections between nodes as physical lines in the pi model, or as a 
+    simple representation of a transformer.
 :param going_from: The node identifer where this connection is being made from.
 :type going_from: int
 :param going_to: The node identifier where this connection is being made to.
 :type going_to: int
 :param resistance: The series resistance within the pi model of a transmission line.
 :type resistance: float
-:param reactance: The series reactance within the pi model of the transmission line or the reactance in the 
-    simple representation of a transformer.
+:param reactance: The series reactance within the pi model of the transmission line or the reactance in 
+    the simple representation of a transformer.
 :type reactance: float
 :param total_shunt_susceptance: The total amount of susceptance in the pi model of the transmission line.
 :type total_shunt_susceptance: float
@@ -103,7 +103,8 @@ class LineData:
         """
         return "Transformer" if self._half_b == 0 else "Line"
 
-    ### ----------------------------------------- Setters -----------------------------------------
+    ### ------------------------------------------ Setters ------------------------------------------
+
     @state.setter
     def state(self, new_state: str):
         """
@@ -182,7 +183,6 @@ class LineData:
         return csr_array((data, (row, col)), shape=(size, size))
 
 
-    # Initialize the class
     def __init__(self, going_from: BusData, going_to: BusData, resistance: float, reactance: float, total_shunt_susceptance: float, maximum_capacity: int):
         self._f = going_from # Connection going from BusData
         self._t = going_to # Connection going to BusData

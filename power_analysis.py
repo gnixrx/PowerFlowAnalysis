@@ -5,15 +5,15 @@ from global_setting import mm_max
 from data_bus import BusData
 """
 The power analysis class interperates the inputs from the node/bus and line data and uses the power analysis equations
-to find the power injected at the node/bus.
-Solve the implicit equations by:
-    Solving the mismatch equations for PQ and PV busses:
-        Pk = sum from i=1 to N ( Vk Vi (Gki cos Thki + Bki sin Thki)
-        Qk = sum from i=1 to N ( Vk Vi (Gki cos Thki - Bki sin Thki)
-    Builds the Jacobian to find the where the system balances to minimize the delta between the voltages/angles using the 
-        Newton-Raphson method.
-    Recalculate the new voltages/angles for PQ/PV busses, then return to solving mismatch if the delta was not low enough.
-Solve the explicit equations to find the active and reactive power on the PV/S busses.
+    to find the power injected at the node/bus.
+    Solve the implicit equations by:
+        Solving the mismatch equations for PQ and PV busses:
+            Pk = sum from i=1 to N ( Vk Vi (Gki cos Thki + Bki sin Thki)
+            Qk = sum from i=1 to N ( Vk Vi (Gki cos Thki - Bki sin Thki)
+        Builds the Jacobian to find the where the system balances to minimize the delta between the voltages/angles using the 
+            Newton-Raphson method.
+        Recalculate the new voltages/angles for PQ/PV busses, then return to solving mismatch if the delta was not low enough.
+    Solve the explicit equations to find the active and reactive power on the PV/S busses.
 :param bus_data: A list of BusData which represent the  nodes in the graph of the network in the power system.
 :type bus_data: np.Array of BusData
 :param y_matrix: Sparse admittance matrix
@@ -23,6 +23,8 @@ Solve the explicit equations to find the active and reactive power on the PV/S b
 """
 
 class PowerAnalysis:
+    ### ------------------------------------------ Getters ------------------------------------------
+
     @property
     def update_data(self):
         """
@@ -31,6 +33,8 @@ class PowerAnalysis:
         :rtype: (int, float, list)
         """
         return self._iterations, self._exec_time, self._mm_records
+
+    ### ----------------------------------------- Functions -----------------------------------------
 
     def update(self, y_matrix):
         """

@@ -4,13 +4,14 @@ from data_line import LineData
 from data_bus import BusData
 
 """
-Loads and organizes the provided specification for the power system to be analysed from an excel file in a similar format 
-to the system_basecase.xlsx file provided.
+Loads and organizes the provided specification for the power system to be analysed from an excel file in a similar 
+    format to the system_basecase.xlsx file provided.
 :param file: The filename describing the power system to be analysed.
 :type file: string
 """
 class DataReader:
-    # Getters
+    ### ------------------------------------------ Getters ------------------------------------------
+
     @property
     def line_data(self):
         """
@@ -28,7 +29,8 @@ class DataReader:
         """
         return self._bus_data
 
-    # Initialize the data class.
+    ### ----------------------------------------- Functions -----------------------------------------
+
     def __init__(self, file="system_basecase.xlsx"):
         # Check to see if the system excel definition is present
         if file[-5:] == ".xlsx" or file[-4:] == ".xls":
