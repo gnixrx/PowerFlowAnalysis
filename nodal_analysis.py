@@ -11,10 +11,10 @@ NodalAnalysis class describes the circuit network of lines and connections of bu
 
 """
 class NodalAnalysis:
-    ### ----------------------------------------- Functions -----------------------------------------
+    ### ----------------------------------------- Getters -----------------------------------------
 
-    # Return the combined Y admittance matrix as array
-    def get_y_matrix(self):
+    @property
+    def y_matrix(self):
         """
         Returns the combined complex admittance matrix of the current network.
         :return: The combined _Y matrix
@@ -27,7 +27,8 @@ class NodalAnalysis:
 
         return self._Y
 
-    def get_node_max(self):
+    @property
+    def node_max(self):
         """
         Returns the maximum node numbers in the network from the line data
         :return: Maximum node
@@ -35,12 +36,13 @@ class NodalAnalysis:
         """
         return self._node_max
 
+    ### ----------------------------------------- Functions -----------------------------------------
 
     def __init__(self, line_data: np.array):
         self._line_data = line_data
 
         # Create node count
-        self._node_max = max([line.max_node() for line in line_data]) + 1 # Maximum node refered in each line
+        self._node_max = max([line.max_node for line in line_data]) + 1 # Maximum node refered in each line
 
 
     def __repr__(self):

@@ -103,6 +103,16 @@ class LineData:
         """
         return "Transformer" if self._half_b == 0 else "Line"
 
+
+    @property
+    def max_node(self):
+        """
+        Returns the maximum node referenced by this line either its to or from attribute
+        :return: Maximum identifier of the to or from attribute
+        :rtype: int
+        """
+        return max(self._f.id, self._t.id)
+
     ### ------------------------------------------ Setters ------------------------------------------
 
     @state.setter
@@ -147,16 +157,6 @@ class LineData:
         I_ki = m * ((Vk - Vi) / (self._r + 1j * self._x) + 1j * self._half_b * Vk)
         result = Vk * np.conjugate(I_ki)
         return result
-
-
-
-    def max_node(self):
-        """
-        Returns the maximum node referenced by this line either its to or from attribute
-        :return: Maximum identifier of the to or from attribute
-        :rtype: int
-        """
-        return max(self._f.id, self._t.id)
 
 
     def y_stamp(self, size):

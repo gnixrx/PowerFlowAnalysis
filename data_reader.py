@@ -4,8 +4,8 @@ from data_line import LineData
 from data_bus import BusData
 
 """
-Loads and organizes the provided specification for the power system to be analysed from an excel file in a similar 
-    format to the system_basecase.xlsx file provided.
+Loads and organizes the provided specification for the power system to be analysed from an excel file in a 
+    similar format to the system_basecase.xlsx file provided.
 :param file: The filename describing the power system to be analysed.
 :type file: string
 """

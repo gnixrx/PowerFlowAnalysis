@@ -10,12 +10,12 @@ def main():
     data_write = DataWriter()
     nodal = NodalAnalysis(data_read.line_data)
 
-    data_write.add_y_matrix(nodal.get_y_matrix())  # Deliverable #1
+    data_write.add_y_matrix(nodal.y_matrix)  # Deliverable #1
     power = PowerAnalysis(data_read.bus_data)
 
     # Run base case.
     print("Running base case.")
-    print(power.update(nodal.get_y_matrix()))
+    print(power.update(nodal.y_matrix))
     data_write.add_power_iterations(*power.update_data) # Deliverable #2
     data_write.add_bus_line_result(data_read.bus_data, data_read.line_data) # Deliverable #3
 
@@ -24,7 +24,7 @@ def main():
     print("Running contingency case 1.")
     data_read.line_data[0].state = "Half"
     print(data_read.line_data[0])
-    print(power.update(nodal.get_y_matrix()))
+    print(power.update(nodal.y_matrix))
     data_write.add_bus_line_result(data_read.bus_data, data_read.line_data) # Deliverable #4
 
     # Set up contingency case 2
@@ -35,7 +35,7 @@ def main():
     for n in [6, 14, 15]:
         data_read.line_data[n].state = "Off"
         print(data_read.line_data[n])
-    print(power.update(nodal.get_y_matrix()))
+    print(power.update(nodal.y_matrix))
     data_write.add_bus_line_result(data_read.bus_data, data_read.line_data) # Deliverable #5
 
     # Create excel deliverable
