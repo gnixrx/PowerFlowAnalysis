@@ -32,28 +32,28 @@ class LineData:
 
     @property
     def p_from(self):
-        p = self.line_flow_calc(self._f, self._t)
+        p = self._line_flow_calc(self._f, self._t)
         if p != "Unknown":
             p = np.real(p)
         return p
 
     @property
     def q_from(self):
-        q = self.line_flow_calc(self._f, self._t)
+        q = self._line_flow_calc(self._f, self._t)
         if q != "Unknown":
             q = np.imag(q)
         return q
 
     @property
     def p_to(self):
-        p = self.line_flow_calc(self._t, self._f)
+        p = self._line_flow_calc(self._t, self._f)
         if p != "Unknown":
             p = np.real(p)
         return p
 
     @property
     def q_to(self):
-        q = self.line_flow_calc(self._t, self._f)
+        q = self._line_flow_calc(self._t, self._f)
         if q != "Unknown":
             q = np.imag(q)
         return q
@@ -132,9 +132,9 @@ class LineData:
             self._state = "On"
 
     ### ----------------------------------------- Functions -----------------------------------------
-    def line_flow_calc(self, k, i):
+    def _line_flow_calc(self, k, i):
         """
-        Calculate the line flow from bus to bus. Only up to date after power_analysis.update()
+        Private function to calculate the line flow from bus to bus. Only up to date after power_analysis.update()
         :param k: From bus
         :type k: BusData
         :param i: To bus

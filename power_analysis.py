@@ -48,14 +48,14 @@ class PowerAnalysis:
 
         # Start power analysis
         start = time.perf_counter()
-        self.solve_implicit()
-        self.solve_explicit()
+        self.__solve_implicit()
+        self.__solve_explicit()
         end = time.perf_counter()
         self._exec_time = end - start
 
         return f"Update took {self._exec_time:0.5f}s in {self._iterations} iterations."
 
-    def solve_implicit(self):
+    def __solve_implicit(self):
         """
         Solves the implicit equations for power analysis.
         :return: None
@@ -72,11 +72,11 @@ class PowerAnalysis:
         self._iterations = 0
         self._mm_records = []
         while convergence >= mm_max:  # When the absolute maximum is over the floor accuracy try again.
-            mm_vector, mm_record = self.calc_mismatch()
+            mm_vector, mm_record = self.__calc_mismatch()
             self._mm_records.append(mm_record)
 
             # Build inverse Jacobian matrix
-            J = np.bmat([[self.H(), self.M()], [self.N(), self.L()]])
+            J = np.bmat([[self.__H(), self.__M()], [self.__N(), self.__L()]])
             J_inv = -1 * np.linalg.inv(J)
 
             # Find delta theta, delta V
@@ -93,7 +93,19 @@ class PowerAnalysis:
             convergence = np.max(np.abs(delta_Th_V))  # Check to see if need for more adjustments
             self._iterations += 1
 
-    def values_ki(self, k, i):
+
+    def __solve_explicit(self):
+        """
+        Solves the explicit equations with knowns from implicit equations.
+        :return: None
+        :rtype: None
+        """
+        for bus in self._s_pv:
+            if bus._type == 'S':
+               bus.P = np.sum(self.__power_flow_eq(True, bus))
+            bus.Q = np.sum(self.__power_flow_eq(False, bus))
+
+    def __values_ki(self, k, i):
         """
         Return values for Voltage, Voltage Angle, and Acceptance
         :param k: Bus k
@@ -111,7 +123,7 @@ class PowerAnalysis:
         return V_k, V_i, Th_ki, G_ki, B_ki
 
 
-    def H(self):
+    def __H(self):
         """
         Creates the H matrix the upper left of the Jacobian matrix.
         :return: H matrix
@@ -125,7 +137,7 @@ class PowerAnalysis:
             # Iterate through connections to k diagonal
             for g in np.argwhere(self._Y_row == bus_k._b):  # Each connection where admittance != 0)
                 bus_g = self._bus_data[self._Y_col[g][0]]
-                V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_g)
+                V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_g)
 
                 if bus_k._b != bus_g._b:
                     H_kk.append(V_k * V_i * (-G_ki * np.sin(Th_ki) + B_ki * np.cos(Th_ki)))
@@ -135,7 +147,7 @@ class PowerAnalysis:
             i = 0
             for bus_i in self._pq_pv:
                 # bus_i = self._pq_pv[i]
-                V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_i)
+                V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_i)
 
                 if bus_k._b != bus_i._b:
                     H[k, i] = V_k * V_i * (G_ki * np.sin(Th_ki) - B_ki * np.cos(Th_ki))
@@ -145,7 +157,7 @@ class PowerAnalysis:
 
         return H
 
-    def M(self):
+    def __M(self):
         """
         Creates the M matrix the upper right of the Jacobian matrix.
         :return: M matrix
@@ -161,7 +173,7 @@ class PowerAnalysis:
                 M_kk_front = 0
                 for g in np.argwhere(self._Y_row == bus_k._b):  # Each connection where admittance != 0)
                     bus_g = self._bus_data[self._Y_col[g][0]]
-                    V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_g)
+                    V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_g)
 
                     if bus_k._b != bus_g._b:
                         M_kk.append(V_i * (G_ki * np.cos(Th_ki) + B_ki * np.sin(Th_ki)))
@@ -172,7 +184,7 @@ class PowerAnalysis:
             # Iterate connections between ki
             i = 0
             for bus_i in self._pq:
-                V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_i)
+                V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_i)
 
                 if bus_k._b != bus_i._b:
                     M[k, i] = V_k * (G_ki * np.cos(Th_ki) + B_ki * np.sin(Th_ki))
@@ -181,7 +193,7 @@ class PowerAnalysis:
 
         return M
 
-    def N(self):
+    def __N(self):
         """
         Creates the N matrix the lower left of the Jacobian matrix.
         :return: N matrix
@@ -196,7 +208,7 @@ class PowerAnalysis:
             # Iterate through connections to kk
             for g in np.argwhere(self._Y_row == bus_k._b):  # Each connection where admittance != 0)
                 bus_g = self._bus_data[self._Y_col[g][0]]
-                V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_g)
+                V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_g)
 
                 if bus_k._b != bus_g._b:
                     N_kk.append(V_k * V_i * (G_ki * np.cos(Th_ki) + B_ki * np.sin(Th_ki)))
@@ -205,7 +217,7 @@ class PowerAnalysis:
             i = 0
             # Iterate connections between ki
             for bus_i in self._pq_pv:
-                V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_i)
+                V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_i)
 
                 if bus_k._b != bus_i._b:
                     N[k, i] = V_k * V_i * (-G_ki * np.cos(Th_ki) - B_ki * np.sin(Th_ki))
@@ -214,7 +226,7 @@ class PowerAnalysis:
 
         return N
 
-    def L(self):
+    def __L(self):
         """
         Creates the L matrix the lower right of the Jacobian matrix.
         :return: L matrix
@@ -229,7 +241,7 @@ class PowerAnalysis:
             # Iterate through connections to kk
             for g in np.argwhere(self._Y_row == bus_k._b):  # Each connection where admittance != 0)
                 bus_g = self._bus_data[self._Y_col[g][0]]
-                V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_g)
+                V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_g)
 
                 if bus_k._b != bus_g._b:
                     L_kk.append(V_i * (G_ki * np.sin(Th_ki) - B_ki * np.cos(Th_ki)))
@@ -240,7 +252,7 @@ class PowerAnalysis:
             # Iterate connections between ki
             i = 0
             for bus_i in self._pq:
-                V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus_k, bus_i)
+                V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus_k, bus_i)
 
                 if bus_k._b != bus_i._b:
                     L[k, i] = V_k * (G_ki * np.sin(Th_ki) - B_ki * np.cos(Th_ki))
@@ -250,19 +262,7 @@ class PowerAnalysis:
 
         return L
 
-
-    def solve_explicit(self):
-        """
-        Solves the explicit equations with knowns from implicit equations.
-        :return: None
-        :rtype: None
-        """
-        for bus in self._s_pv:
-            if bus._type == 'S':
-               bus.P = np.sum(self.power_flow_eq(True, bus))
-            bus.Q = np.sum(self.power_flow_eq(False, bus))
-
-    def power_flow_eq(self, isP, bus):
+    def __power_flow_eq(self, isP, bus):
         """
         Calculates the mismatch equations for a bus.
         :param isP: Calcluate the P equations if this is true, else the Q equations
@@ -275,7 +275,7 @@ class PowerAnalysis:
         Pk_Qk = []
         for col_i in np.argwhere(self._Y_row == bus._b):  # Each connection where admittance != 0)
             bus_i = self._bus_data[self._Y_col[col_i][0]]
-            V_k, V_i, Th_ki, G_ki, B_ki = self.values_ki(bus, bus_i)
+            V_k, V_i, Th_ki, G_ki, B_ki = self.__values_ki(bus, bus_i)
 
             if isP:
                 Pk_Qk.append(V_k * V_i * (G_ki * np.cos(Th_ki) + B_ki * np.sin(Th_ki)))
@@ -284,7 +284,7 @@ class PowerAnalysis:
 
         return Pk_Qk
 
-    def calc_mismatch(self):
+    def __calc_mismatch(self):
         """
         Calculates the values for mismatch equations in the power system given the conditions of the Bus Data.
         :return: The values for mismatch equations in a vector
@@ -299,13 +299,13 @@ class PowerAnalysis:
         P_i = 0
         for bus in self._pq_pv:
             # Calculate Active Power for PQ/PV bus
-            p_mm = np.sum(self.power_flow_eq(True, bus)) - bus._P
+            p_mm = np.sum(self.__power_flow_eq(True, bus)) - bus._P
             if p_mm > mm_record[1]:
                 mm_record[0] = bus
                 mm_record[1] = p_mm
             PQ[P_i] = p_mm
             if bus._type == 'D':
-                q_mm = np.sum(self.power_flow_eq(False, bus)) - bus._Q
+                q_mm = np.sum(self.__power_flow_eq(False, bus)) - bus._Q
                 if q_mm > mm_record[3]:
                     mm_record[2] = bus
                     mm_record[3] = q_mm
@@ -315,14 +315,6 @@ class PowerAnalysis:
 
         return PQ, mm_record
 
-
-    def get_node_max(self):
-        """
-        Returns the maximum node numbers in the network from the bus data
-        :return: Maximum node
-        :rtype: int
-        """
-        return self._node_max
 
     def __init__(self, bus_data: np.array):
         # Create node count
