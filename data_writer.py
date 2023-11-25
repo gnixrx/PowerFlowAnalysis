@@ -43,7 +43,8 @@ class DataWriter():
         :type iterations: int
         :param exec_time: Time it took in seconds to calculate power iterations.
         :type exec_time: float
-        :param mm_record: Record of the maximum mismatches for each iteration for both active and reactive power
+        :param mm_record: Record of the maximum mismatches for each iteration for both active and
+            reactive power
         :type mm_record: list
         :return: None
         :rtype: none
@@ -57,7 +58,8 @@ class DataWriter():
     def add_bus_line_result(self, bus_data, line_data):
         """
         Adds the bus and line results to the outputs
-        :param bus_data: The list of bus data classes which have been updated by the poweranalysis.update function.
+        :param bus_data: The list of bus data classes which have been updated by the
+            poweranalysis.update function.
         :type bus_data: list of BusData
         :param line_data: The list of line data classes
         :type line_data: list of LineData
@@ -65,8 +67,9 @@ class DataWriter():
         :rtype: none
         """
         # Create bus results
-        col = ['Bus', 'Type', 'V (p.u.)', 'Angle (degrees)', 'Real Power Gen (MW)', 'Reactive Power Gen (MVAr)',
-               'Real Power Load (MW)', 'Reactive Power Load (MVAr)', 'Within Voltage Limits' ]
+        col = ['Bus', 'Type', 'V (p.u.)', 'Angle (degrees)', 'Real Power Gen (MW)',
+               'Reactive Power Gen (MVAr)', 'Real Power Load (MW)', 'Reactive Power Load (MVAr)',
+               'Within Voltage Limits' ]
         b_result = []
         for bus in bus_data:
             b_result.append([bus.id + 1, bus.type, bus.V, np.degrees(bus.Th),
@@ -86,7 +89,8 @@ class DataWriter():
             l_result.append([line.bus_from.id + 1, line.bus_to.id + 1,
                              line.p_from * s_base, line.q_from * s_base,
                              line.p_to * s_base, line.q_to * s_base,
-                             abs(line.p_from + line.p_to) * s_base, abs(line.q_from + line.q_to) * s_base,
+                             abs(line.p_from + line.p_to) * s_base,
+                             abs(line.q_from + line.q_to) * s_base,
                              str(line.overloaded)])
 
         self._line_result_df.append(pd.DataFrame(l_result, columns=col))

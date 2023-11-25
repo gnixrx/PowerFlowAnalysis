@@ -4,21 +4,24 @@ from scipy.sparse import csr_array
 from global_setting import mm_max
 from data_bus import BusData
 """
-The power analysis class interperates the inputs from the node/bus and line data and uses the power analysis equations
-    to find the power injected at the node/bus.
+The power analysis class interperates the inputs from the node/bus and line data and uses the power 
+    analysis equations to find the power injected at the node/bus.
     Solve the implicit equations by:
         Solving the mismatch equations for PQ and PV busses:
             Pk = sum from i=1 to N ( Vk Vi (Gki cos Thki + Bki sin Thki)
             Qk = sum from i=1 to N ( Vk Vi (Gki cos Thki - Bki sin Thki)
-        Builds the Jacobian to find the where the system balances to minimize the delta between the voltages/angles using the 
-            Newton-Raphson method.
-        Recalculate the new voltages/angles for PQ/PV busses, then return to solving mismatch if the delta was not low enough.
+        Builds the Jacobian to find the where the system balances to minimize the delta between the 
+            voltages/angles using the Newton-Raphson method.
+        Recalculate the new voltages/angles for PQ/PV busses, then return to solving mismatch if the 
+            delta was not low enough.
     Solve the explicit equations to find the active and reactive power on the PV/S busses.
-:param bus_data: A list of BusData which represent the  nodes in the graph of the network in the power system.
+:param bus_data: A list of BusData which represent the  nodes in the graph of the network in the power 
+    system.
 :type bus_data: np.Array of BusData
 :param y_matrix: Sparse admittance matrix
 :type y_matrix: csr_array
-:param line_data: A list of LineData which represent the connections between nodes in the graph of the network in the power system.
+:param line_data: A list of LineData which represent the connections between nodes in the graph of the 
+    network in the power system.
 :type line_data: np.Array of ListData
 """
 
@@ -71,7 +74,7 @@ class PowerAnalysis:
         convergence = 1
         self._iterations = 0
         self._mm_records = []
-        while convergence >= mm_max:  # When the absolute maximum is over the floor accuracy try again.
+        while convergence >= mm_max: # When the absolute maximum is over the floor accuracy try again.
             mm_vector, mm_record = self.__calc_mismatch()
             self._mm_records.append(mm_record)
 
@@ -286,11 +289,13 @@ class PowerAnalysis:
 
     def __calc_mismatch(self):
         """
-        Calculates the values for mismatch equations in the power system given the conditions of the Bus Data.
+        Calculates the values for mismatch equations in the power system given the conditions of
+            the Bus Data.
         :return: The values for mismatch equations in a vector
         :rtype: np.array(float)
         """
-        mm_record = [self._bus_data[0], 0, self._bus_data[0], 0] # Use slack bus as default with 0 mismatch
+        # Use slack bus as default with 0 mismatch
+        mm_record = [self._bus_data[0], 0, self._bus_data[0], 0]
 
         # for each P and Q equation or PQ and PV bus calculate the resulting P and Q mismatch numbers
         PQ = np.empty(self._pq_pv.size + self._pq.size)

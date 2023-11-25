@@ -32,28 +32,28 @@ class LineData:
 
     @property
     def p_from(self):
-        p = self._line_flow_calc(self._f, self._t)
+        p = self.__line_flow_calc(self._f, self._t)
         if p != "Unknown":
             p = np.real(p)
         return p
 
     @property
     def q_from(self):
-        q = self._line_flow_calc(self._f, self._t)
+        q = self.__line_flow_calc(self._f, self._t)
         if q != "Unknown":
             q = np.imag(q)
         return q
 
     @property
     def p_to(self):
-        p = self._line_flow_calc(self._t, self._f)
+        p = self.__line_flow_calc(self._t, self._f)
         if p != "Unknown":
             p = np.real(p)
         return p
 
     @property
     def q_to(self):
-        q = self._line_flow_calc(self._t, self._f)
+        q = self.__line_flow_calc(self._t, self._f)
         if q != "Unknown":
             q = np.imag(q)
         return q
@@ -66,7 +66,8 @@ class LineData:
         :rtype: string or boolean
         """
         # Don't bother if power is unknown.
-        if self.p_from == "Unknown" or self.q_from == "Unknown" or self.p_to == "Unknown" or self.q_to == "Unknown":
+        if (self.p_from == "Unknown" or self.q_from == "Unknown"
+                or self.p_to == "Unknown" or self.q_to == "Unknown"):
             return "Unknown"
 
         # Find power
@@ -75,7 +76,7 @@ class LineData:
 
         # Set multipler for state.
         if self._state == "Off": m = 0
-        elif self._state == "Half":  m = 0.5  # Y_total = Y_1 + Y_2, if Y_1 = Y_2 = Y, then Y = Y_total * 0.5
+        elif self._state == "Half":  m = 0.5
         else: m = 1
 
         if from_mva <= m * self._fmax or to_mva <= m * self._fmax:
@@ -96,8 +97,8 @@ class LineData:
     @property
     def type(self):
         """
-        This function returns the type of connection between the nodes as either a transformer, or a line depending on
-        if the connection has a shunt susceptance.
+        This function returns the type of connection between the nodes as either a transformer,
+            or a line depending on if the connection has a shunt susceptance.
         :return: Type of connection being made between the nodes.
         :rtype: string
         """
@@ -132,32 +133,6 @@ class LineData:
             self._state = "On"
 
     ### ----------------------------------------- Functions -----------------------------------------
-    def _line_flow_calc(self, k, i):
-        """
-        Private function to calculate the line flow from bus to bus. Only up to date after power_analysis.update()
-        :param k: From bus
-        :type k: BusData
-        :param i: To bus
-        :type i: BusData
-        :return: Complex power
-        :rtype: complex float
-        """
-        # Unknown Voltages at each bus
-        if k.V == None or i.V == None:
-            return "Unknown"
-
-        # Set multipler for state.
-        if self._state == "Off": m = 0
-        elif self._state == "Half": m = 0.5  # Y_total = Y_1 + Y_2, if Y_1 = Y_2 = Y, then Y = Y_total * 0.5
-        else: m = 1
-
-        Vk = k.V * np.cos(k.Th) + 1j * k.V * np.sin(k.Th)
-        Vi = i.V * np.cos(i.Th) + 1j * i.V * np.sin(i.Th)
-
-        I_ki = m * ((Vk - Vi) / (self._r + 1j * self._x) + 1j * self._half_b * Vk)
-        result = Vk * np.conjugate(I_ki)
-        return result
-
 
     def y_stamp(self, size):
         """
@@ -169,7 +144,7 @@ class LineData:
         """
         # Set multipler for state.
         if self._state == "Off": m = 0
-        elif self._state == "Half": m = 0.5 # Y_total = Y_1 + Y_2, if Y_1 = Y_2 = Y, then Y = Y_total * 0.5
+        elif self._state == "Half": m = 0.5
         else: m = 1
 
         # Create the stamp values for diagonal and nondiagonals for this line.
@@ -183,7 +158,41 @@ class LineData:
         return csr_array((data, (row, col)), shape=(size, size))
 
 
-    def __init__(self, going_from: BusData, going_to: BusData, resistance: float, reactance: float, total_shunt_susceptance: float, maximum_capacity: int):
+    def __line_flow_calc(self, k, i):
+        """
+        Private function to calculate the line flow from bus to bus. Only up to date after
+            power_analysis.update()
+        :param k: From bus
+        :type k: BusData
+        :param i: To bus
+        :type i: BusData
+        :return: Complex power
+        :rtype: complex float
+        """
+        # Unknown Voltages at each bus
+        if k.V == None or i.V == None:
+            return "Unknown"
+
+        # Set multipler for state. Y_total = Y_1 + Y_2, if Y_1 = Y_2 = Y, then Y = Y_total * 0.5
+        if self._state == "Off": m = 0
+        elif self._state == "Half": m = 0.5
+        else: m = 1
+
+        Vk = k.V * np.cos(k.Th) + 1j * k.V * np.sin(k.Th)
+        Vi = i.V * np.cos(i.Th) + 1j * i.V * np.sin(i.Th)
+
+        I_ki = m * ((Vk - Vi) / (self._r + 1j * self._x) + 1j * self._half_b * Vk)
+        result = Vk * np.conjugate(I_ki)
+        return result
+
+
+    def __init__(self,
+                 going_from: BusData,
+                 going_to: BusData,
+                 resistance: float,
+                 reactance: float,
+                 total_shunt_susceptance: float,
+                 maximum_capacity: int):
         self._f = going_from # Connection going from BusData
         self._t = going_to # Connection going to BusData
         self._r = resistance # Resistance of connection in pu
@@ -194,4 +203,5 @@ class LineData:
 
 
     def __repr__(self):
-        return (f"{self.__class__.__name__}> Connection: {self._f.id + 1} <-> {self._t.id + 1}, Type: {self.type}, State: {self.state}")
+        return (f"{self.__class__.__name__}> Connection: {self._f.id + 1} <-> {self._t.id + 1}, "
+                f"Type: {self.type}, State: {self.state}")
