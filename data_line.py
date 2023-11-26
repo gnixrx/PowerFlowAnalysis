@@ -6,7 +6,7 @@ from scipy.sparse import csr_array
 """
 The LineData class describes the connections between nodes as physical lines in the pi model, or as a 
     simple representation of a transformer.
-:param going_from: The node identifer where this connection is being made from.
+:param going_from: The node identifier where this connection is being made from.
 :type going_from: int
 :param going_to: The node identifier where this connection is being made to.
 :type going_to: int

@@ -3,7 +3,7 @@ from global_setting import s_base, v_max, v_min
 
 """
 The BusData class describes the attributes of the busses in the power system.
-:param b: The node/bus identifer.
+:param b: The node/bus identifier.
 :type going_from: int
 :param p: Load active power loss in MW.
 :type resistance: float

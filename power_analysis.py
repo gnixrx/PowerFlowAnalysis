@@ -4,7 +4,7 @@ from scipy.sparse import csr_array
 from global_setting import mm_max
 from data_bus import BusData
 """
-The power analysis class interperates the inputs from the node/bus and line data and uses the power 
+The power analysis class interprets the inputs from the node/bus and line data and uses the power 
     analysis equations to find the power injected at the node/bus.
     Solve the implicit equations by:
         Solving the mismatch equations for PQ and PV busses:
