@@ -50,9 +50,11 @@ class DataWriter():
         :rtype: none
         """
         col = ['P Bus', 'P Mismatch', 'Q Bus', 'Q Mismatch']
-        for row in mm_record:
+        for row in mm_record: # Adjust to the expected result
             row[0] = row[0].id + 1
+            row[1] = row[1] * s_base
             row[2] = row[2].id + 1
+            row[3] = row[3] * s_base
         self._mm_record_df.append(pd.DataFrame(mm_record, columns=col))
 
     def add_bus_line_result(self, bus_data, line_data):
