@@ -71,13 +71,10 @@ class PowerAnalysis:
             if bus.Th == None:
                 bus.Th = 0
 
-        convergence = 1
         self._iterations = 0
         self._mm_records = []
+        mm_vector, convergence = self.__check_convergence(self._mm_records)
         while convergence >= mm_max: # When the absolute maximum is over the floor accuracy try again.
-            mm_vector, mm_record = self.__calc_mismatch()
-            self._mm_records.append(mm_record)
-
             # Build inverse Jacobian matrix
             J = np.bmat([[self.__H(), self.__M()], [self.__N(), self.__L()]])
             J_inv = -1 * np.linalg.inv(J)
@@ -93,8 +90,20 @@ class PowerAnalysis:
                     bus.V = bus.V + delta_Th_V[i + self._pq_pv.size]
                 i += 1
 
-            convergence = np.max(np.abs(delta_Th_V))  # Check to see if need for more adjustments
+            mm_vector, convergence = self.__check_convergence(self._mm_records) # Check Mismatch
             self._iterations += 1
+
+
+    def __check_convergence(self, record):
+        """
+        Creates the mismatch vector and checks for convergence
+        :return: mm_vector, convergence
+        :rtype: array, float
+        """
+        mm_vector, mm_record = self.__calc_mismatch()
+        record.append(mm_record)
+        convergence = np.max(np.abs(mm_vector))
+        return mm_vector, convergence
 
 
     def __solve_explicit(self):
